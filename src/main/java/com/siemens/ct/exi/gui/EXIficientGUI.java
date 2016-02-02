@@ -100,9 +100,12 @@ import com.siemens.ct.exi.GrammarFactory;
 import com.siemens.ct.exi.SchemaIdResolver;
 import com.siemens.ct.exi.api.sax.EXIResult;
 import com.siemens.ct.exi.exceptions.EXIException;
+import com.siemens.ct.exi.exceptions.UnsupportedOption;
 import com.siemens.ct.exi.grammars.Grammars;
 import com.siemens.ct.exi.helpers.DefaultEXIFactory;
 import com.siemens.ct.exi.helpers.DefaultSchemaIdResolver;
+import com.siemens.ct.exi.json.EXIforJSONGenerator;
+import com.siemens.ct.exi.json.EXIforJSONParser;
 
 /*
  * Ideas:
@@ -136,10 +139,16 @@ public class EXIficientGUI extends JFrame {
 	private JRadioButton rdbtnXmlSchemaDocument;
 	private JRadioButton rdbtnXmlSchematypesOnly;
 
-	private JComboBox comboBoxAlignment;
+	private JComboBox<String> comboBoxAlignment;
 
 	private JProgressBar progressBarCompressionRatio;
 
+	final JButton btnBrowseXSD;
+	final JPanel panelSchema;
+	final JPanel panelXSD;
+	final JRadioButton rdbtnSchemaless;
+	final JPanel panelXSDBrowse;
+	
 	final JCheckBox chckbxPreserveCM;
 	final JCheckBox chckbxPI;
 	final JCheckBox chckbxPreserveDTD;
@@ -174,6 +183,10 @@ public class EXIficientGUI extends JFrame {
 	JTextField textFieldMaximumNumberOfBuiltInElementGrammars;
 
 	JLabel lblNewLabelCodingResults;
+	private JTextField textFieldEncodeJSON;
+	private JTextField textFieldEncodeEXIforJSON;
+	private JTextField textFieldDecodeEXIforJSON;
+	private JTextField textFieldDecodeJSON;
 
 	protected JFileChooser getFileChooser() {
 		if (fc == null) {
@@ -217,8 +230,10 @@ public class EXIficientGUI extends JFrame {
 				this.doUpdateEXIInput(file.getAbsolutePath());
 			} else if (textField == textFieldXSD) {
 				this.doUpdateXSDInput(file.getAbsolutePath());
+			} else if (textField == textFieldEncodeJSON) {
+				doUpdateJSONInput(file.getAbsolutePath());
 			} else {
-				System.err.println("Inavlid textfield " + textField);
+				System.err.println("Invalid textfield " + textField);
 			}
 
 		}
@@ -231,6 +246,20 @@ public class EXIficientGUI extends JFrame {
 		textFieldDecodeEXI.setText(exiLoc);
 		textFieldDecodeXML.setText(exiLoc + ".xml");
 	}
+	
+	protected void doUpdateJSONInput(String sJSON) {
+		textFieldEncodeJSON.setText(sJSON);
+		String exiLoc = sJSON + ".exi4sjon";
+		textFieldEncodeEXIforJSON.setText(exiLoc);
+		textFieldDecodeEXIforJSON.setText(exiLoc);
+		textFieldDecodeJSON.setText(exiLoc + ".json");
+	}
+	
+	protected void doUpdateEXIforJSONInput(String sEXI) {
+		textFieldDecodeEXIforJSON.setText(sEXI);
+		textFieldDecodeJSON.setText(sEXI + ".json");
+	}
+	
 
 	protected void doUpdateEXIInput(String sEXI) {
 		textFieldDecodeEXI.setText(sEXI);
@@ -241,7 +270,7 @@ public class EXIficientGUI extends JFrame {
 		textFieldXSD.setText(sXSD);
 	}
 
-	protected void doEncode() {
+	protected void doEncodeXML() {
 		try {
 			String xml = textFieldEncodeXML.getText();
 			if (xml == null || xml.length() == 0) {
@@ -254,29 +283,99 @@ public class EXIficientGUI extends JFrame {
 
 			// advanced encoding options
 			EncodingOptions encOpt = ef.getEncodingOptions();
+			doUpdateAdvancedEcodingOptions(encOpt);
 
-			if (checkBoxIncludeOptions.isSelected()) {
-				encOpt.setOption(EncodingOptions.INCLUDE_OPTIONS);
-				encOpt.setOption(EncodingOptions.INCLUDE_COOKIE);
+			if (checkBoxNoLocalValuePartitions.isSelected()) {
+				ef.setLocalValuePartitions(false);
 			}
-			if (checkBoxIncludeCookie.isSelected()) {
-				encOpt.setOption(EncodingOptions.INCLUDE_COOKIE);
+			if (textFieldMaximumNumberOfBuiltInProductions.getText().trim()
+					.length() > 0) {
+				ef.setMaximumNumberOfBuiltInProductions(Integer
+						.parseInt(textFieldMaximumNumberOfBuiltInProductions
+								.getText()));
 			}
-			if (checkBoxIncludeSchemaId.isSelected()) {
-				encOpt.setOption(EncodingOptions.INCLUDE_SCHEMA_ID);
+			if (textFieldMaximumNumberOfBuiltInElementGrammars.getText().trim()
+					.length() > 0) {
+				ef.setMaximumNumberOfBuiltInElementGrammars(Integer
+						.parseInt(textFieldMaximumNumberOfBuiltInElementGrammars
+								.getText()));
 			}
-			if (checkBoxIncludeSchemaLocation.isSelected()) {
-				encOpt.setOption(EncodingOptions.INCLUDE_XSI_SCHEMALOCATION);
+			if (textFieldSelfContainedElements.getText().trim()
+					.length() > 0) {
+				try {
+					String qnames = textFieldSelfContainedElements.getText().trim();
+					StringTokenizer st = new StringTokenizer(qnames, ",");
+					QName[] scElements = new QName[st.countTokens()];
+					int i = 0;
+					while(st.hasMoreTokens()) {
+						scElements[i++] = QName.valueOf(st.nextToken().trim());
+					}
+					ef.setSelfContainedElements(scElements);
+				} catch (Exception e) {
+					JOptionPane.showMessageDialog(this, "Syntax error: exptected list of qnames such as \"{.*}elementWithAnyNamespace, {uri:foo}elementWithDedicatedNamespace\"", "SelfContained elements syntax error ",
+					        JOptionPane.WARNING_MESSAGE);
+				}
 			}
-			if (checkBoxIncludeInsignificantXsiNil.isSelected()) {
-				encOpt.setOption(EncodingOptions.INCLUDE_INSIGNIFICANT_XSI_NIL);
+
+			EXIResult exiResult = new EXIResult(ef);
+			OutputStream fos = new FileOutputStream(exi);
+			exiResult.setOutputStream(fos);
+			XMLReader xmlReader = XMLReaderFactory.createXMLReader();
+			xmlReader.setContentHandler(exiResult.getHandler());
+			xmlReader.parse(new InputSource(xml));
+			fos.close();
+
+			// everything went just fine
+			doUpdateProgressBar(xml, exi);
+
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			System.out.println("---");
+			JOptionPane.showMessageDialog(contentPane, ex.getMessage(),
+					"EXI encoding error", JOptionPane.ERROR_MESSAGE);
+		}
+	}
+	
+	private void doUpdateAdvancedEcodingOptions(EncodingOptions encOpt) throws UnsupportedOption {
+		if (checkBoxIncludeOptions.isSelected()) {
+			encOpt.setOption(EncodingOptions.INCLUDE_OPTIONS);
+			encOpt.setOption(EncodingOptions.INCLUDE_COOKIE);
+		}
+		if (checkBoxIncludeCookie.isSelected()) {
+			encOpt.setOption(EncodingOptions.INCLUDE_COOKIE);
+		}
+		if (checkBoxIncludeSchemaId.isSelected()) {
+			encOpt.setOption(EncodingOptions.INCLUDE_SCHEMA_ID);
+		}
+		if (checkBoxIncludeSchemaLocation.isSelected()) {
+			encOpt.setOption(EncodingOptions.INCLUDE_XSI_SCHEMALOCATION);
+		}
+		if (checkBoxIncludeInsignificantXsiNil.isSelected()) {
+			encOpt.setOption(EncodingOptions.INCLUDE_INSIGNIFICANT_XSI_NIL);
+		}
+		if (checkBoxIncludeProfileValues.isSelected()) {
+			encOpt.setOption(EncodingOptions.INCLUDE_PROFILE_VALUES);
+		}
+		if (checkBoxRetainEntityReference.isSelected()) {
+			encOpt.setOption(EncodingOptions.RETAIN_ENTITY_REFERENCE);
+		}
+	}
+	
+	protected void doEncodeJSON() {
+		try {
+			String json = textFieldEncodeJSON.getText();
+			if (json == null || json.length() == 0) {
+				throw new Exception("No JSON input specified");
 			}
-			if (checkBoxIncludeProfileValues.isSelected()) {
-				encOpt.setOption(EncodingOptions.INCLUDE_PROFILE_VALUES);
-			}
-			if (checkBoxRetainEntityReference.isSelected()) {
-				encOpt.setOption(EncodingOptions.RETAIN_ENTITY_REFERENCE);
-			}
+			String exi = textFieldEncodeEXIforJSON.getText();
+			System.out.println("Encode JSON file: " + json + " to " + exi);
+
+			EXIFactory ef = getEXIFactory();
+
+			// advanced encoding options
+			EncodingOptions encOpt = ef.getEncodingOptions();
+			doUpdateAdvancedEcodingOptions(encOpt);
+
 			if (checkBoxNoLocalValuePartitions.isSelected()) {
 				ef.setLocalValuePartitions(false);
 			}
@@ -309,18 +408,14 @@ public class EXIficientGUI extends JFrame {
 				}
 			}
 			
-			
-
-			EXIResult exiResult = new EXIResult(ef);
+			// generate exi-for-json
+			EXIforJSONGenerator e4jGenerator = new EXIforJSONGenerator();
+			InputStream is = new FileInputStream(json);
 			OutputStream fos = new FileOutputStream(exi);
-			exiResult.setOutputStream(fos);
-			XMLReader xmlReader = XMLReaderFactory.createXMLReader();
-			xmlReader.setContentHandler(exiResult.getHandler());
-			xmlReader.parse(new InputSource(xml));
-			fos.close();
+			e4jGenerator.generate(is, fos);
 
 			// everything went just fine
-			doUpdateProgressBar(xml, exi);
+			doUpdateProgressBar(json, exi);
 
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -447,6 +542,10 @@ public class EXIficientGUI extends JFrame {
 							doUpdateEXIInput(file.getAbsolutePath());
 						} else if (textField == textFieldXSD) {
 							doUpdateXSDInput(file.getAbsolutePath());
+						} else if (textField == textFieldEncodeJSON) {
+							doUpdateJSONInput(file.getAbsolutePath());
+						} else if (textField == textFieldDecodeEXIforJSON) {
+							doUpdateEXIforJSONInput(file.getAbsolutePath());
 						} else {
 							System.err
 									.println("Invalid textfield " + textField);
@@ -460,7 +559,9 @@ public class EXIficientGUI extends JFrame {
 	}
 
 	
-	protected void doDecode() {
+	
+	
+	protected void doDecodeEXI() {
 		try {
 
 			String exi = textFieldDecodeEXI.getText();
@@ -505,6 +606,34 @@ public class EXIficientGUI extends JFrame {
 			System.out.println("---");
 			JOptionPane.showMessageDialog(contentPane, ex.getMessage(),
 					"EXI decoding error", JOptionPane.ERROR_MESSAGE);
+		}
+	}
+	
+	protected void doDecodeEXIforJSON() {
+		try {
+			String exi = textFieldDecodeEXIforJSON.getText();
+			if (exi == null || exi.length() == 0) {
+				throw new Exception("No EXIforJSON input specified");
+			}
+			String json = textFieldDecodeJSON.getText();
+			System.out.println("Decode EXIforJSON file: " + exi + " to " + json);
+
+			// parse exi-for-json again
+			EXIforJSONParser e4jParser = new EXIforJSONParser();
+			InputStream exiInput = new FileInputStream(exi);
+			OutputStream jsonOutput = new FileOutputStream(json);
+			e4jParser.parse(exiInput, jsonOutput);
+			jsonOutput.flush();
+			jsonOutput.close();
+
+			// everything went just fine
+			doUpdateProgressBar(json, exi);
+
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			System.out.println("---");
+			JOptionPane.showMessageDialog(contentPane, ex.getMessage(),
+					"EXIforJSON decoding error", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 
@@ -611,11 +740,11 @@ public class EXIficientGUI extends JFrame {
 		gbc_lblNewLabel.gridy = 0;
 		panelCodingMode.add(lblNewLabel, gbc_lblNewLabel);
 
-		comboBoxAlignment = new JComboBox();
+		comboBoxAlignment = new JComboBox<String>();
 		comboBoxAlignment
 				.setToolTipText("<html>The alignment option is used to control the alignment of event codes and content items\r\n<ul>\r\n <li><strong>bit-packed</strong> indicates that the event codes and associated content are packed in bits without any padding in-between</li>\r\n<li><strong>byte-alignment</strong> indicates that the event codes and associated content are aligned on byte boundaries</li>\r\n<li><strong>pre-compression</strong> indicates that all steps involved in compression are to be done with the exception of the final step of applying the DEFLATE algorithm (the primary use case of pre-compression is to avoid a duplicate compression step when compression capability is built into the transport protocol)</li>\r\n<li><strong>compression</strong> increases compactness using additional computational resources  by  applying the DEFLATE algorithm</li>\r\n<ul>\r\n</html>");
 		comboBoxAlignment.setAlignmentX(Component.LEFT_ALIGNMENT);
-		comboBoxAlignment.setModel(new DefaultComboBoxModel(new String[] {
+		comboBoxAlignment.setModel(new DefaultComboBoxModel<String>(new String[] {
 				CodingMode.BIT_PACKED.toString(),
 				CodingMode.BYTE_PACKED.toString(),
 				CodingMode.PRE_COMPRESSION.toString(),
@@ -772,14 +901,14 @@ public class EXIficientGUI extends JFrame {
 		panelOptions.add(chckbxStrict);
 		
 
-		final JButton btnBrowseXSD = new JButton("Browse");
+		btnBrowseXSD = new JButton("Browse");
 		btnBrowseXSD.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				doFileChooser(textFieldXSD);
 			}
 		});
 
-		JPanel panelSchema = new JPanel();
+		panelSchema = new JPanel();
 		panelSchema.setBorder(new TitledBorder(null, "Schema Information",
 				TitledBorder.LEADING, TitledBorder.TOP, null, null));
 		panelEXIOptions.add(panelSchema);
@@ -789,34 +918,34 @@ public class EXIficientGUI extends JFrame {
 		gbl_panelSchema.rowWeights = new double[] { 0.0, 0.0 };
 		panelSchema.setLayout(gbl_panelSchema);
 
-		JPanel panel_1 = new JPanel();
-		GridBagConstraints gbc_panel_1 = new GridBagConstraints();
-		gbc_panel_1.fill = GridBagConstraints.HORIZONTAL;
-		gbc_panel_1.anchor = GridBagConstraints.WEST;
-		gbc_panel_1.insets = new Insets(0, 0, 5, 0);
-		gbc_panel_1.gridx = 0;
-		gbc_panel_1.gridy = 0;
-		panelSchema.add(panel_1, gbc_panel_1);
-		panel_1.setLayout(new BoxLayout(panel_1, BoxLayout.Y_AXIS));
+		panelXSD = new JPanel();
+		GridBagConstraints gbc_panelXSD = new GridBagConstraints();
+		gbc_panelXSD.fill = GridBagConstraints.HORIZONTAL;
+		gbc_panelXSD.anchor = GridBagConstraints.WEST;
+		gbc_panelXSD.insets = new Insets(0, 0, 5, 0);
+		gbc_panelXSD.gridx = 0;
+		gbc_panelXSD.gridy = 0;
+		panelSchema.add(panelXSD, gbc_panelXSD);
+		panelXSD.setLayout(new BoxLayout(panelXSD, BoxLayout.Y_AXIS));
 
-		JRadioButton rdbtnSchemaless = new JRadioButton("Schema-less");
+		rdbtnSchemaless = new JRadioButton("Schema-less");
 		rdbtnSchemaless
 				.setToolTipText("No schema information is used for processing the EXI body (i.e. a schema-less EXI stream)");
-		panel_1.add(rdbtnSchemaless);
+		panelXSD.add(rdbtnSchemaless);
 		rdbtnSchemaless.setSelected(true);
 		buttonGroupSchema.add(rdbtnSchemaless);
 
 		rdbtnXmlSchematypesOnly = new JRadioButton("XML schema-types only");
 		rdbtnXmlSchematypesOnly
 				.setToolTipText("No user defined schema information is used for processing the EXI body; however, the built-in XML schema types are available for use in the EXI body");
-		panel_1.add(rdbtnXmlSchematypesOnly);
+		panelXSD.add(rdbtnXmlSchematypesOnly);
 		buttonGroupSchema.add(rdbtnXmlSchematypesOnly);
 
 		rdbtnXmlSchemaDocument = new JRadioButton("XML schema document");
 		rdbtnXmlSchemaDocument
 				.setToolTipText("The schemaId option may be used to identify the schema information used for processing the EXI body");
 
-		panel_1.add(rdbtnXmlSchemaDocument);
+		panelXSD.add(rdbtnXmlSchemaDocument);
 		buttonGroupSchema.add(rdbtnXmlSchemaDocument);
 
 		// rdbtnXmlSchemaDocument.addActionListener(new ActionListener() {
@@ -834,37 +963,50 @@ public class EXIficientGUI extends JFrame {
 			}
 		});
 
-		JPanel panel = new JPanel();
-		GridBagConstraints gbc_panel = new GridBagConstraints();
-		gbc_panel.insets = new Insets(0, 20, 0, 0);
-		gbc_panel.anchor = GridBagConstraints.NORTHWEST;
-		gbc_panel.fill = GridBagConstraints.HORIZONTAL;
-		gbc_panel.gridx = 0;
-		gbc_panel.gridy = 1;
-		panelSchema.add(panel, gbc_panel);
-		panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
+		panelXSDBrowse = new JPanel();
+		GridBagConstraints gbc_panelXSDBrowse = new GridBagConstraints();
+		gbc_panelXSDBrowse.insets = new Insets(0, 20, 0, 0);
+		gbc_panelXSDBrowse.anchor = GridBagConstraints.NORTHWEST;
+		gbc_panelXSDBrowse.fill = GridBagConstraints.HORIZONTAL;
+		gbc_panelXSDBrowse.gridx = 0;
+		gbc_panelXSDBrowse.gridy = 1;
+		panelSchema.add(panelXSDBrowse, gbc_panelXSDBrowse);
+		panelXSDBrowse.setLayout(new BoxLayout(panelXSDBrowse, BoxLayout.LINE_AXIS));
 
 		textFieldXSD = new JTextField();
 		textFieldXSD.setEnabled(false);
 		textFieldXSD.setEditable(false);
 		textFieldXSD.setUI(new HintTextFieldUI("  Select XSD", true));
-		panel.add(textFieldXSD);
+		panelXSDBrowse.add(textFieldXSD);
 		textFieldXSD.setColumns(10);
 		this.doDragAndDrop(textFieldXSD);
 
 		btnBrowseXSD.setEnabled(false);
-		panel.add(btnBrowseXSD);
+		panelXSDBrowse.add(btnBrowseXSD);
 
 		tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+		tabbedPane.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				boolean bIsXML;
+				if(tabbedPane.getSelectedIndex() > 1) {
+					// JSON
+					bIsXML = false;
+				} else {
+					// XML
+					bIsXML = true;
+				}
+				doXMLChange(bIsXML);
+			}
+		});
 		contentPane.add(tabbedPane, BorderLayout.CENTER);
 
 		JPanel panelXML2EXI = new JPanel();
 		tabbedPane.addTab("XML to EXI", null, panelXML2EXI, null);
 		panelXML2EXI.setLayout(new BorderLayout(0, 0));
 
-		JButton btnNewButton_1 = new JButton("Encode to EXI");
+		JButton btnEncodeToEXI = new JButton("Encode to EXI");
 
-		panelXML2EXI.add(btnNewButton_1, BorderLayout.SOUTH);
+		panelXML2EXI.add(btnEncodeToEXI, BorderLayout.SOUTH);
 
 		JPanel panel_4 = new JPanel();
 		panelXML2EXI.add(panel_4, BorderLayout.NORTH);
@@ -969,13 +1111,13 @@ public class EXIficientGUI extends JFrame {
 		tabbedPane.addTab("EXI to XML", null, panelEXI2XML, null);
 		panelEXI2XML.setLayout(new BorderLayout(0, 0));
 
-		JButton btnNewButton = new JButton("Decode to XML");
-		btnNewButton.addActionListener(new ActionListener() {
+		JButton btnDecodeToXML = new JButton("Decode to XML");
+		btnDecodeToXML.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				doDecode();
+				doDecodeEXI();
 			}
 		});
-		panelEXI2XML.add(btnNewButton, BorderLayout.SOUTH);
+		panelEXI2XML.add(btnDecodeToXML, BorderLayout.SOUTH);
 
 		JPanel panel_7 = new JPanel();
 		panelEXI2XML.add(panel_7, BorderLayout.NORTH);
@@ -1020,6 +1162,108 @@ public class EXIficientGUI extends JFrame {
 
 		JPanel panel_10 = new JPanel();
 		panel_7.add(panel_10);
+		
+		JPanel panelJSON2EXI = new JPanel();
+		tabbedPane.addTab("JSON to EXIforJSON", null, panelJSON2EXI, null);
+		panelJSON2EXI.setLayout(new BorderLayout(0, 0));
+		
+		JButton btnEncodeToEXI4JSON = new JButton("Encode to EXIforJSON");
+		btnEncodeToEXI4JSON.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				doEncodeJSON();
+			}
+		});
+		panelJSON2EXI.add(btnEncodeToEXI4JSON, BorderLayout.SOUTH);
+		
+		JPanel panel_6 = new JPanel();
+		panelJSON2EXI.add(panel_6, BorderLayout.NORTH);
+		panel_6.setLayout(new BoxLayout(panel_6, BoxLayout.Y_AXIS));
+		
+		JPanel panel_13 = new JPanel();
+		panel_6.add(panel_13);
+		panel_13.setLayout(new BoxLayout(panel_13, BoxLayout.X_AXIS));
+		
+		textFieldEncodeJSON = new JTextField();
+		textFieldEncodeJSON.setEnabled(false);
+		textFieldEncodeJSON.setEditable(false);
+		textFieldEncodeJSON
+		.setUI(new HintTextFieldUI("  Select JSON file", true));
+		panel_13.add(textFieldEncodeJSON);
+		textFieldEncodeJSON.setColumns(10);
+		this.doDragAndDrop(textFieldEncodeJSON);
+		
+		JButton btnNewButton = new JButton("Browse");
+		btnNewButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				doFileChooser(textFieldEncodeJSON);
+			}
+		});
+		panel_13.add(btnNewButton);
+		
+		JPanel panel_14 = new JPanel();
+		panel_6.add(panel_14);
+		panel_14.setLayout(new BoxLayout(panel_14, BoxLayout.X_AXIS));
+		
+		textFieldEncodeEXIforJSON = new JTextField();
+		textFieldEncodeEXIforJSON.setEnabled(false);
+		textFieldEncodeEXIforJSON.setEditable(false);
+		textFieldEncodeEXIforJSON
+		.setUI(new HintTextFieldUI("  EXIforJSON output file", true));
+		panel_14.add(textFieldEncodeEXIforJSON);
+		textFieldEncodeEXIforJSON.setColumns(10);
+		
+		
+		JButton btnNewButton_1 = new JButton("Browse");
+		btnNewButton_1.setEnabled(false);
+		panel_14.add(btnNewButton_1);
+		
+		JPanel panelEXI2JSON = new JPanel();
+		tabbedPane.addTab("EXIforJSON to JSON", null, panelEXI2JSON, null);
+		panelEXI2JSON.setLayout(new BorderLayout(0, 0));
+		
+		JButton btnDecodeToJSON = new JButton("Decode to JSON");
+		btnDecodeToJSON.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				doDecodeEXIforJSON();
+			}
+		});
+		panelEXI2JSON.add(btnDecodeToJSON, BorderLayout.SOUTH);
+		
+		JPanel panel_12 = new JPanel();
+		panelEXI2JSON.add(panel_12, BorderLayout.NORTH);
+		panel_12.setLayout(new BoxLayout(panel_12, BoxLayout.Y_AXIS));
+		
+		JPanel panel_15 = new JPanel();
+		panel_12.add(panel_15);
+		panel_15.setLayout(new BoxLayout(panel_15, BoxLayout.X_AXIS));
+		
+		textFieldDecodeEXIforJSON = new JTextField();
+		textFieldDecodeEXIforJSON.setEnabled(false);
+		textFieldDecodeEXIforJSON.setEditable(false);
+		textFieldDecodeEXIforJSON
+		.setUI(new HintTextFieldUI("  Select EXIforJSON file", true));
+		panel_15.add(textFieldDecodeEXIforJSON);
+		textFieldDecodeEXIforJSON.setColumns(10);
+		this.doDragAndDrop(textFieldDecodeEXIforJSON);
+		
+		JButton btnNewButton_2 = new JButton("Browse");
+		panel_15.add(btnNewButton_2);
+		
+		JPanel panel_16 = new JPanel();
+		panel_12.add(panel_16);
+		panel_16.setLayout(new BoxLayout(panel_16, BoxLayout.X_AXIS));
+		
+		textFieldDecodeJSON = new JTextField();
+		textFieldDecodeJSON.setEnabled(false);
+		textFieldDecodeJSON.setEditable(false);
+		textFieldDecodeJSON
+		.setUI(new HintTextFieldUI("  JSON output file", true));
+		panel_16.add(textFieldDecodeJSON);
+		textFieldDecodeJSON.setColumns(10);
+		
+		JButton btnNewButton_3 = new JButton("Browse");
+		btnNewButton_3.setEnabled(false);
+		panel_16.add(btnNewButton_3);
 
 		JPanel panel_5 = new JPanel();
 		contentPane.add(panel_5, BorderLayout.SOUTH);
@@ -1034,9 +1278,9 @@ public class EXIficientGUI extends JFrame {
 		lblNewLabelCodingResults = new JLabel("");
 		panel_5.add(lblNewLabelCodingResults);
 
-		btnNewButton_1.addActionListener(new ActionListener() {
+		btnEncodeToEXI.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				doEncode();
+				doEncodeXML();
 			}
 		});
 	}
@@ -1063,6 +1307,49 @@ public class EXIficientGUI extends JFrame {
 		}
 	}
 	
+	private boolean prevXMLStrict;
+	
+	private void doCheckStrict() {
+		boolean isStrict = chckbxStrict.isSelected();
+		chckbxPreserveCM.setEnabled(!isStrict);
+		chckbxPI.setEnabled(!isStrict);
+		chckbxPreserveDTD.setEnabled(!isStrict);
+		// chckbxPreservePrefixes still possible
+		chckbxLexicalValues.setEnabled(!isStrict);
+		chckbxEnableSelfContained.setEnabled(!isStrict);
+		
+		if(panelSchema.isEnabled()) {
+			// not JSON
+			prevXMLStrict = isStrict;
+		}
+		
+	}
+	
+	private void doXMLChange(boolean bIsXML) {
+		panelSchema.setEnabled(bIsXML);
+		panelXSD.setEnabled(bIsXML);
+		rdbtnSchemaless.setEnabled(bIsXML);
+		rdbtnXmlSchematypesOnly.setEnabled(bIsXML);
+		rdbtnXmlSchemaDocument.setEnabled(bIsXML);
+		panelXSDBrowse.setEnabled(bIsXML);
+		
+		// XSD browse button
+		boolean decXsd = rdbtnXmlSchemaDocument.isSelected() && bIsXML;
+		// textFieldXSD.setEnabled(decXsd);
+		btnBrowseXSD.setEnabled(decXsd);
+		
+		// strict?
+		if(bIsXML) {
+			chckbxStrict.setSelected(prevXMLStrict);	
+		} else {
+			chckbxStrict.setSelected(!bIsXML);	
+		}
+		
+		chckbxStrict.setEnabled(bIsXML);
+		
+		doCheckStrict();
+	}
+	
 	class OptionsChangeListener implements ChangeListener {
 
 		public void stateChanged(ChangeEvent e) {
@@ -1079,16 +1366,9 @@ public class EXIficientGUI extends JFrame {
 			} else if (e.getSource() == chckbxEnableSelfContained) {
 				
 			} else if (e.getSource() == chckbxStrict) {
-				boolean isStrict = chckbxStrict.isSelected();
-				chckbxPreserveCM.setEnabled(!isStrict);
-				chckbxPI.setEnabled(!isStrict);
-				chckbxPreserveDTD.setEnabled(!isStrict);
-				// chckbxPreservePrefixes still possible
-				chckbxLexicalValues.setEnabled(!isStrict);
-				chckbxEnableSelfContained.setEnabled(!isStrict);
+				doCheckStrict();
 			}
 		}
-		
 	}
 
 	class IntegerRangeDocumentFilter extends DocumentFilter {
