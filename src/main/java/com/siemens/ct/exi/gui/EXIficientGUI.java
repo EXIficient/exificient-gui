@@ -106,6 +106,7 @@ import com.siemens.ct.exi.helpers.DefaultEXIFactory;
 import com.siemens.ct.exi.helpers.DefaultSchemaIdResolver;
 import com.siemens.ct.exi.json.EXIforJSONGenerator;
 import com.siemens.ct.exi.json.EXIforJSONParser;
+import com.siemens.ct.exi.api.sax.SAXFactory;
 
 /*
  * Ideas:
@@ -577,7 +578,7 @@ public class EXIficientGUI extends JFrame {
 			ef.setSchemaIdResolver(sir);
 
 			TransformerFactory tf = TransformerFactory.newInstance();
-			XMLReader exiReader = ef.createEXIReader();
+			XMLReader exiReader = new SAXFactory(ef).createEXIReader();
 			Transformer transformer = tf.newTransformer();
 
 			if (ef.isFragment()) {
