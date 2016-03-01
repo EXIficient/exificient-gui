@@ -8,3 +8,5 @@ mvn clean compile assembly:single
 ## Screenshot
 
 ![EXIficient GUI Screenshot](http://exificient.github.io/java/gui.png)
+
+Download a runnable JAR from http://exificient.github.io/java/exificient-gui-jar-with-dependencies.jar.
