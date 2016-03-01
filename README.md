@@ -5,6 +5,8 @@ To create a single runnable JAR with all dependencies run
 
 mvn clean compile assembly:single
 
+[![Build Status](https://travis-ci.org/EXIficient/exificient-gui.svg?branch=master)](https://travis-ci.org/EXIficient/exificient-gui)
+
 ## Screenshot
 
 ![EXIficient GUI Screenshot](http://exificient.github.io/java/gui.png)
