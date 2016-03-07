@@ -487,7 +487,7 @@ public class EXIficientGUI extends JFrame {
 			ef.setValuePartitionCapacity(Integer
 					.parseInt(textFieldValuePartitionCapacity.getText()));
 		}
-		if (cm.usesRechanneling()) {
+		if (cm == CodingMode.COMPRESSION || cm == CodingMode.PRE_COMPRESSION) {
 			if (textFieldBlockSize.getText().trim().length() > 0) {
 				ef.setBlockSize(Integer.parseInt(textFieldBlockSize.getText()));
 			}
@@ -854,7 +854,7 @@ public class EXIficientGUI extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				CodingMode cm = CodingMode.valueOf(comboBoxAlignment
 						.getSelectedItem().toString());
-				textFieldBlockSize.setEnabled(cm.usesRechanneling());
+				textFieldBlockSize.setEnabled(cm == CodingMode.COMPRESSION || cm == CodingMode.PRE_COMPRESSION);
 			}
 		});
 
