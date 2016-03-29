@@ -1315,8 +1315,8 @@ public class EXIficientGUI extends JFrame {
 		chckbxPreserveCM.setEnabled(!isStrict);
 		chckbxPI.setEnabled(!isStrict);
 		chckbxPreserveDTD.setEnabled(!isStrict);
-		// chckbxPreservePrefixes still possible
-		chckbxLexicalValues.setEnabled(!isStrict);
+		// chckbxLexicalValues still possible
+		chckbxPreservePrefixes.setEnabled(!isStrict);
 		chckbxEnableSelfContained.setEnabled(!isStrict);
 		
 		if(panelSchema.isEnabled()) {
