@@ -41,14 +41,19 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.zip.Deflater;
 
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -104,6 +109,9 @@ import com.siemens.ct.exi.exceptions.UnsupportedOption;
 import com.siemens.ct.exi.grammars.Grammars;
 import com.siemens.ct.exi.helpers.DefaultEXIFactory;
 import com.siemens.ct.exi.helpers.DefaultSchemaIdResolver;
+import com.siemens.ct.exi.javascript.EXItoAST;
+import com.siemens.ct.exi.javascript.JStoAST;
+import com.siemens.ct.exi.javascript.JStoEXI;
 import com.siemens.ct.exi.json.EXIforJSONGenerator;
 import com.siemens.ct.exi.json.EXIforJSONParser;
 import com.siemens.ct.exi.api.sax.SAXFactory;
@@ -233,6 +241,12 @@ public class EXIficientGUI extends JFrame {
 				this.doUpdateXSDInput(file.getAbsolutePath());
 			} else if (textField == textFieldEncodeJSON) {
 				doUpdateJSONInput(file.getAbsolutePath());
+			} else if (textField == textFieldDecodeEXIforJSON) {
+				doUpdateEXIforJSONInput(file.getAbsolutePath());
+			} else if (textField == textFieldEncodeJS) {
+				doUpdateJSInput(file.getAbsolutePath());
+			} else if (textField == textFieldDecodeEXIforJS) {
+				doUpdateEXIforJSInput(file.getAbsolutePath());
 			} else {
 				System.err.println("Invalid textfield " + textField);
 			}
@@ -250,7 +264,7 @@ public class EXIficientGUI extends JFrame {
 	
 	protected void doUpdateJSONInput(String sJSON) {
 		textFieldEncodeJSON.setText(sJSON);
-		String exiLoc = sJSON + ".exi4sjon";
+		String exiLoc = sJSON + ".exi4json";
 		textFieldEncodeEXIforJSON.setText(exiLoc);
 		textFieldDecodeEXIforJSON.setText(exiLoc);
 		textFieldDecodeJSON.setText(exiLoc + ".json");
@@ -259,6 +273,20 @@ public class EXIficientGUI extends JFrame {
 	protected void doUpdateEXIforJSONInput(String sEXI) {
 		textFieldDecodeEXIforJSON.setText(sEXI);
 		textFieldDecodeJSON.setText(sEXI + ".json");
+	}
+	
+	protected void doUpdateJSInput(String sJS) {
+		textFieldEncodeJS.setText(sJS);
+		String exiLoc = sJS + ".exi4js";
+		textFieldEncodeEXIforJavascript.setText(exiLoc);
+		textFieldDecodeEXIforJS.setText(exiLoc);
+		textFieldDecodeJavascript.setText(exiLoc + ".jsast");
+	}
+	
+	
+	protected void doUpdateEXIforJSInput(String sEXI) {
+		textFieldDecodeEXIforJS.setText(sEXI);
+		textFieldDecodeJavascript.setText(sEXI + ".js");
 	}
 	
 
@@ -362,6 +390,60 @@ public class EXIficientGUI extends JFrame {
 		}
 	}
 	
+	
+	protected void doEncodeJavascript() {
+		try {
+			String js = textFieldEncodeJS.getText();
+			if (js == null || js.length() == 0) {
+				throw new Exception("No JavaScript input specified");
+			}
+			String exi = textFieldEncodeEXIforJavascript.getText();
+			System.out.println("Encode JavaScript file: " + js + " to " + exi);
+
+			EXIFactory ef = getEXIFactory();
+
+			// advanced encoding options
+			EncodingOptions encOpt = ef.getEncodingOptions();
+			doUpdateAdvancedEcodingOptions(encOpt);
+
+			if (checkBoxNoLocalValuePartitions.isSelected()) {
+				ef.setLocalValuePartitions(false);
+			}
+			if (textFieldMaximumNumberOfBuiltInProductions.getText().trim()
+					.length() > 0) {
+				ef.setMaximumNumberOfBuiltInProductions(Integer
+						.parseInt(textFieldMaximumNumberOfBuiltInProductions
+								.getText()));
+			}
+			if (textFieldMaximumNumberOfBuiltInElementGrammars.getText().trim()
+					.length() > 0) {
+				ef.setMaximumNumberOfBuiltInElementGrammars(Integer
+						.parseInt(textFieldMaximumNumberOfBuiltInElementGrammars
+								.getText()));
+			}
+			
+			// generate exi-for-javascript
+			String jsCode = new String(Files.readAllBytes(Paths.get(js)));
+//			if(ef.getCodingMode() == CodingMode.COMPRESSION) {
+//				ef.getEncodingOptions().setOption(EncodingOptions.DEFLATE_COMPRESSION_VALUE, Deflater.BEST_COMPRESSION);
+//			}
+			
+			JStoEXI js2exi = new JStoEXI(ef);
+			OutputStream os = new FileOutputStream(exi);
+			js2exi.generate(JStoAST.getAST(jsCode), os);
+			os.close();
+
+			// everything went just fine
+			doUpdateProgressBar(js, exi);
+
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			System.out.println("---");
+			JOptionPane.showMessageDialog(contentPane, ex.getMessage(),
+					"EXI encoding error", JOptionPane.ERROR_MESSAGE);
+		}
+	}
+	
 	protected void doEncodeJSON() {
 		try {
 			String json = textFieldEncodeJSON.getText();
@@ -410,10 +492,11 @@ public class EXIficientGUI extends JFrame {
 			}
 			
 			// generate exi-for-json
-			EXIforJSONGenerator e4jGenerator = new EXIforJSONGenerator();
+			EXIforJSONGenerator e4jGenerator = new EXIforJSONGenerator(ef);
 			InputStream is = new FileInputStream(json);
 			OutputStream fos = new FileOutputStream(exi);
 			e4jGenerator.generate(is, fos);
+			fos.close();
 
 			// everything went just fine
 			doUpdateProgressBar(json, exi);
@@ -547,6 +630,10 @@ public class EXIficientGUI extends JFrame {
 							doUpdateJSONInput(file.getAbsolutePath());
 						} else if (textField == textFieldDecodeEXIforJSON) {
 							doUpdateEXIforJSONInput(file.getAbsolutePath());
+						} else if (textField == textFieldEncodeJS) {
+							doUpdateJSInput(file.getAbsolutePath());
+						} else if (textField == textFieldDecodeEXIforJS) {
+							doUpdateEXIforJSInput(file.getAbsolutePath());
 						} else {
 							System.err
 									.println("Invalid textfield " + textField);
@@ -610,6 +697,37 @@ public class EXIficientGUI extends JFrame {
 		}
 	}
 	
+	protected void doDecodeEXIforJS() {
+		try {
+			String exi = textFieldDecodeEXIforJS.getText();
+			if (exi == null || exi.length() == 0) {
+				throw new Exception("No EXI4JS input specified");
+			}
+			String js = textFieldDecodeJavascript.getText();
+			System.out.println("Decode EXIforJS file: " + exi + " to " + js);
+
+			// parse exi-for-json again
+			EXIFactory ef = getEXIFactory();
+			
+			// TODO currently AST only
+			EXItoAST exi2ast = new EXItoAST(ef);
+			InputStream exiInput = new FileInputStream(exi);
+			OutputStream jsOutput = new FileOutputStream(js);
+			exi2ast.generate(exiInput, jsOutput);
+			jsOutput.flush();
+			jsOutput.close();
+
+			// everything went just fine
+			doUpdateProgressBar(js, exi);
+
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			System.out.println("---");
+			JOptionPane.showMessageDialog(contentPane, ex.getMessage(),
+					"EXIforJSON decoding error", JOptionPane.ERROR_MESSAGE);
+		}
+	}
+	
 	protected void doDecodeEXIforJSON() {
 		try {
 			String exi = textFieldDecodeEXIforJSON.getText();
@@ -620,7 +738,8 @@ public class EXIficientGUI extends JFrame {
 			System.out.println("Decode EXIforJSON file: " + exi + " to " + json);
 
 			// parse exi-for-json again
-			EXIforJSONParser e4jParser = new EXIforJSONParser();
+			EXIFactory ef = getEXIFactory();
+			EXIforJSONParser e4jParser = new EXIforJSONParser(ef);
 			InputStream exiInput = new FileInputStream(exi);
 			OutputStream jsonOutput = new FileOutputStream(json);
 			e4jParser.parse(exiInput, jsonOutput);
@@ -649,7 +768,7 @@ public class EXIficientGUI extends JFrame {
 	 * Create the frame.
 	 */
 	public EXIficientGUI() {
-		setTitle("EXIficient (" + Constants.VERSION + ")");
+		setTitle("EXIficient (0.9.7-SNAPSHOT)");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 770, 500);
 		contentPane = new JPanel();
@@ -1165,10 +1284,10 @@ public class EXIficientGUI extends JFrame {
 		panel_7.add(panel_10);
 		
 		JPanel panelJSON2EXI = new JPanel();
-		tabbedPane.addTab("JSON to EXIforJSON", null, panelJSON2EXI, null);
+		tabbedPane.addTab("JSON to EXI4JSON", null, panelJSON2EXI, null);
 		panelJSON2EXI.setLayout(new BorderLayout(0, 0));
 		
-		JButton btnEncodeToEXI4JSON = new JButton("Encode to EXIforJSON");
+		JButton btnEncodeToEXI4JSON = new JButton("Encode to EXI4JSON");
 		btnEncodeToEXI4JSON.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				doEncodeJSON();
@@ -1209,7 +1328,7 @@ public class EXIficientGUI extends JFrame {
 		textFieldEncodeEXIforJSON.setEnabled(false);
 		textFieldEncodeEXIforJSON.setEditable(false);
 		textFieldEncodeEXIforJSON
-		.setUI(new HintTextFieldUI("  EXIforJSON output file", true));
+		.setUI(new HintTextFieldUI("  EXI4JSON output file", true));
 		panel_14.add(textFieldEncodeEXIforJSON);
 		textFieldEncodeEXIforJSON.setColumns(10);
 		
@@ -1219,7 +1338,7 @@ public class EXIficientGUI extends JFrame {
 		panel_14.add(btnNewButton_1);
 		
 		JPanel panelEXI2JSON = new JPanel();
-		tabbedPane.addTab("EXIforJSON to JSON", null, panelEXI2JSON, null);
+		tabbedPane.addTab("EXI4JSON to JSON", null, panelEXI2JSON, null);
 		panelEXI2JSON.setLayout(new BorderLayout(0, 0));
 		
 		JButton btnDecodeToJSON = new JButton("Decode to JSON");
@@ -1242,12 +1361,17 @@ public class EXIficientGUI extends JFrame {
 		textFieldDecodeEXIforJSON.setEnabled(false);
 		textFieldDecodeEXIforJSON.setEditable(false);
 		textFieldDecodeEXIforJSON
-		.setUI(new HintTextFieldUI("  Select EXIforJSON file", true));
+		.setUI(new HintTextFieldUI("  Select EXI4JSON file", true));
 		panel_15.add(textFieldDecodeEXIforJSON);
 		textFieldDecodeEXIforJSON.setColumns(10);
 		this.doDragAndDrop(textFieldDecodeEXIforJSON);
 		
 		JButton btnNewButton_2 = new JButton("Browse");
+		btnNewButton_2.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				doFileChooser(textFieldDecodeEXIforJSON);
+			}
+		});
 		panel_15.add(btnNewButton_2);
 		
 		JPanel panel_16 = new JPanel();
@@ -1265,6 +1389,112 @@ public class EXIficientGUI extends JFrame {
 		JButton btnNewButton_3 = new JButton("Browse");
 		btnNewButton_3.setEnabled(false);
 		panel_16.add(btnNewButton_3);
+		
+		JPanel panelJS2EXI = new JPanel();
+		tabbedPane.addTab("JavaScript to EXI4JS", null, panelJS2EXI, null);
+		panelJS2EXI.setLayout(new BorderLayout(0, 0));
+		
+		JButton btnEncodeToEXI4JS = new JButton("Ecode to EXI4JS");
+		btnEncodeToEXI4JS.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				doEncodeJavascript();
+			}
+		});
+		panelJS2EXI.add(btnEncodeToEXI4JS, BorderLayout.SOUTH);
+		
+		JPanel panel = new JPanel();
+		panelJS2EXI.add(panel, BorderLayout.NORTH);
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		
+		JPanel panel_19 = new JPanel();
+		panel.add(panel_19);
+		panel_19.setLayout(new BoxLayout(panel_19, BoxLayout.X_AXIS));
+		
+		textFieldEncodeJS = new JTextField();
+		textFieldEncodeJS.setEnabled(false);
+		textFieldEncodeJS.setEditable(false);
+		panel_19.add(textFieldEncodeJS);
+		textFieldEncodeJS.setColumns(10);
+		textFieldEncodeJS
+		.setUI(new HintTextFieldUI("  Select JavaScript file", true));
+		this.doDragAndDrop(textFieldEncodeJS);
+		
+		JButton btnNewButton_4 = new JButton("Browse");
+		btnNewButton_4.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				doFileChooser(textFieldEncodeJS);
+			}
+		});
+		panel_19.add(btnNewButton_4);
+		
+		JPanel panel_20 = new JPanel();
+		panel.add(panel_20);
+		panel_20.setLayout(new BoxLayout(panel_20, BoxLayout.X_AXIS));
+		
+		textFieldEncodeEXIforJavascript = new JTextField();
+		textFieldEncodeEXIforJavascript.setEnabled(false);
+		textFieldEncodeEXIforJavascript.setEditable(false);
+		panel_20.add(textFieldEncodeEXIforJavascript);
+		textFieldEncodeEXIforJavascript.setColumns(10);
+		textFieldEncodeEXIforJavascript
+		.setUI(new HintTextFieldUI("  EXI4JS output file", true));
+		
+		JButton btnNewButton_5 = new JButton("Browse");
+		btnNewButton_5.setEnabled(false);
+		panel_20.add(btnNewButton_5);
+		
+		JPanel panelEXI2JS = new JPanel();
+		tabbedPane.addTab("EXI4JS to JavaScript", null, panelEXI2JS, null);
+		panelEXI2JS.setLayout(new BorderLayout(0, 0));
+		
+		JButton btnDecodeToJavascript = new JButton("Decode to JavaScript (AST)");
+		btnDecodeToJavascript.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				doDecodeEXIforJS();
+			}
+		});
+		panelEXI2JS.add(btnDecodeToJavascript, BorderLayout.SOUTH);
+		
+		JPanel panel_1 = new JPanel();
+		panelEXI2JS.add(panel_1, BorderLayout.NORTH);
+		panel_1.setLayout(new BoxLayout(panel_1, BoxLayout.Y_AXIS));
+		
+		JPanel panel_17 = new JPanel();
+		panel_1.add(panel_17);
+		panel_17.setLayout(new BoxLayout(panel_17, BoxLayout.X_AXIS));
+		
+		textFieldDecodeEXIforJS = new JTextField();
+		textFieldDecodeEXIforJS.setEnabled(false);
+		textFieldDecodeEXIforJS.setEditable(false);
+		panel_17.add(textFieldDecodeEXIforJS);
+		textFieldDecodeEXIforJS.setColumns(10);
+		textFieldDecodeEXIforJS
+		.setUI(new HintTextFieldUI("  Select EXI4JS file", true));
+		this.doDragAndDrop(textFieldDecodeEXIforJS);
+		
+		JButton btnNewButton_6 = new JButton("Browse");
+		btnNewButton_6.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				doFileChooser(textFieldDecodeEXIforJS);
+			}
+		});
+		panel_17.add(btnNewButton_6);
+		
+		JPanel panel_18 = new JPanel();
+		panel_1.add(panel_18);
+		panel_18.setLayout(new BoxLayout(panel_18, BoxLayout.X_AXIS));
+		
+		textFieldDecodeJavascript = new JTextField();
+		textFieldDecodeJavascript.setEnabled(false);
+		textFieldDecodeJavascript.setEditable(false);
+		panel_18.add(textFieldDecodeJavascript);
+		textFieldDecodeJavascript.setColumns(10);
+		textFieldDecodeJavascript
+		.setUI(new HintTextFieldUI("  Javacript output file", true));
+		
+		JButton btnNewButton_7 = new JButton("Browse");
+		btnNewButton_7.setEnabled(false);
+		panel_18.add(btnNewButton_7);
 
 		JPanel panel_5 = new JPanel();
 		contentPane.add(panel_5, BorderLayout.SOUTH);
@@ -1309,6 +1539,10 @@ public class EXIficientGUI extends JFrame {
 	}
 	
 	private boolean prevXMLStrict;
+	private JTextField textFieldEncodeJS;
+	private JTextField textFieldEncodeEXIforJavascript;
+	private JTextField textFieldDecodeEXIforJS;
+	private JTextField textFieldDecodeJavascript;
 	
 	private void doCheckStrict() {
 		boolean isStrict = chckbxStrict.isSelected();

@@ -35,4 +35,5 @@
       <attribute value="jar:file:/C:/Users/mchn4310/.m2/repository/org/glassfish/javax.json/1.0.4/javax.json-1.0.4-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
+  <classpathentry kind="var" path="M2_REPO/com/siemens/ct/exi/exificient-for-javascript/0.9.7-SNAPSHOT/exificient-for-javascript-0.9.7-SNAPSHOT.jar"/>
 </classpath>
