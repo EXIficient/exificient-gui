@@ -1,7 +1,6 @@
 language: java
 jdk:
 - oraclejdk8
-- oraclejdk7
 env:
   global:
   - SONATYPE_USERNAME=daniel_peintner
