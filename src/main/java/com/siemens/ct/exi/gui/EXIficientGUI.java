@@ -165,6 +165,8 @@ public class EXIficientGUI extends JFrame {
 	final JCheckBox chckbxLexicalValues;
 	final JCheckBox chckbxEnableSelfContained;
 	final JCheckBox chckbxStrict; 
+	
+	final JCheckBox chckbxFragment;
 
 	protected JFileChooser fc;
 	private JTextField textFieldDecodeEXI;
@@ -526,6 +528,8 @@ public class EXIficientGUI extends JFrame {
 					.createXSDTypesOnlyGrammars();
 			ef.setGrammars(g);
 		}
+		
+		
 		// Strict vs. Non-Strict
 		if (chckbxStrict.isSelected()) {
 			ef.setFidelityOptions(FidelityOptions.createStrict());
@@ -574,6 +578,11 @@ public class EXIficientGUI extends JFrame {
 			if (textFieldBlockSize.getText().trim().length() > 0) {
 				ef.setBlockSize(Integer.parseInt(textFieldBlockSize.getText()));
 			}
+		}
+		
+		// is Fragment?
+		if(chckbxFragment.isSelected()) {
+			ef.setFragment(true);
 		}
 
 		return ef;
@@ -844,10 +853,10 @@ public class EXIficientGUI extends JFrame {
 		panelEXIOptions.add(panelCodingMode);
 		GridBagLayout gbl_panelCodingMode = new GridBagLayout();
 		gbl_panelCodingMode.columnWidths = new int[] { 116, 116, 0 };
-		gbl_panelCodingMode.rowHeights = new int[] { 0, 0, 0, 0, 50 };
+		gbl_panelCodingMode.rowHeights = new int[] {0, 0, 0, 0, 0, 50};
 		gbl_panelCodingMode.columnWeights = new double[] { 0.0, 1.0,
 				Double.MIN_VALUE };
-		gbl_panelCodingMode.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0 };
+		gbl_panelCodingMode.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0 };
 		panelCodingMode.setLayout(gbl_panelCodingMode);
 
 		JLabel lblNewLabel = new JLabel("Alignment");
@@ -968,6 +977,21 @@ public class EXIficientGUI extends JFrame {
 		gbc_textFieldBlockSize.gridy = 3;
 		panelCodingMode.add(textFieldBlockSize, gbc_textFieldBlockSize);
 		textFieldBlockSize.setColumns(10);
+		
+		JLabel lblFragment = new JLabel("fragment");
+		GridBagConstraints gbc_lblFragment = new GridBagConstraints();
+		gbc_lblFragment.anchor = GridBagConstraints.EAST;
+		gbc_lblFragment.insets = new Insets(0, 0, 0, 5);
+		gbc_lblFragment.gridx = 0;
+		gbc_lblFragment.gridy = 4;
+		panelCodingMode.add(lblFragment, gbc_lblFragment);
+		
+		chckbxFragment = new JCheckBox("");
+		GridBagConstraints gbc_chckbxFragment = new GridBagConstraints();
+		gbc_chckbxFragment.fill = GridBagConstraints.HORIZONTAL;
+		gbc_chckbxFragment.gridx = 1;
+		gbc_chckbxFragment.gridy = 4;
+		panelCodingMode.add(chckbxFragment, gbc_chckbxFragment);
 
 		comboBoxAlignment.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
