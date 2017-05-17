@@ -92,6 +92,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.sax.SAXSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.xml.sax.DTDHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
@@ -353,6 +354,17 @@ public class EXIficientGUI extends JFrame {
 			exiResult.setOutputStream(fos);
 			XMLReader xmlReader = XMLReaderFactory.createXMLReader();
 			xmlReader.setContentHandler(exiResult.getHandler());
+			
+			// set LexicalHandler
+			xmlReader.setProperty("http://xml.org/sax/properties/lexical-handler",
+					exiResult.getLexicalHandler());
+			// set DeclHandler
+			xmlReader.setProperty(
+					"http://xml.org/sax/properties/declaration-handler",
+					exiResult.getLexicalHandler());
+			// set DTD handler
+			xmlReader.setDTDHandler((DTDHandler) exiResult.getHandler());
+			
 			xmlReader.parse(new InputSource(xml));
 			fos.close();
 
