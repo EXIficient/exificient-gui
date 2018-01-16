@@ -41,8 +41,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -53,7 +51,6 @@ import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.util.List;
 import java.util.StringTokenizer;
-import java.util.zip.Deflater;
 
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -97,25 +94,24 @@ import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
-import com.siemens.ct.exi.CodingMode;
-import com.siemens.ct.exi.Constants;
-import com.siemens.ct.exi.EXIFactory;
-import com.siemens.ct.exi.EncodingOptions;
-import com.siemens.ct.exi.FidelityOptions;
-import com.siemens.ct.exi.GrammarFactory;
-import com.siemens.ct.exi.SchemaIdResolver;
-import com.siemens.ct.exi.api.sax.EXIResult;
-import com.siemens.ct.exi.exceptions.EXIException;
-import com.siemens.ct.exi.exceptions.UnsupportedOption;
-import com.siemens.ct.exi.grammars.Grammars;
-import com.siemens.ct.exi.helpers.DefaultEXIFactory;
-import com.siemens.ct.exi.helpers.DefaultSchemaIdResolver;
+import com.siemens.ct.exi.core.CodingMode;
+import com.siemens.ct.exi.core.EXIFactory;
+import com.siemens.ct.exi.core.EncodingOptions;
+import com.siemens.ct.exi.core.FidelityOptions;
+import com.siemens.ct.exi.core.SchemaIdResolver;
+import com.siemens.ct.exi.core.exceptions.EXIException;
+import com.siemens.ct.exi.core.exceptions.UnsupportedOption;
+import com.siemens.ct.exi.core.grammars.Grammars;
+import com.siemens.ct.exi.core.helpers.DefaultEXIFactory;
+import com.siemens.ct.exi.grammars.GrammarFactory;
 import com.siemens.ct.exi.javascript.EXItoAST;
 import com.siemens.ct.exi.javascript.JStoAST;
 import com.siemens.ct.exi.javascript.JStoEXI;
 import com.siemens.ct.exi.json.EXIforJSONGenerator;
 import com.siemens.ct.exi.json.EXIforJSONParser;
-import com.siemens.ct.exi.api.sax.SAXFactory;
+import com.siemens.ct.exi.main.api.sax.EXIResult;
+import com.siemens.ct.exi.main.api.sax.SAXFactory;
+import com.siemens.ct.exi.main.helpers.DefaultSchemaIdResolver;
 
 /*
  * Ideas:
