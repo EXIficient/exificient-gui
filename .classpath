@@ -4,9 +4,9 @@
   <classpathentry kind="src" path="src/main/java" including="**/*.java"/>
   <classpathentry kind="output" path="target/classes"/>
   <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-  <classpathentry kind="var" path="M2_REPO/com/siemens/ct/exi/exificient/1.0.0/exificient-1.0.0.jar" sourcepath="M2_REPO/com/siemens/ct/exi/exificient/1.0.0/exificient-1.0.0-sources.jar">
+  <classpathentry kind="var" path="M2_REPO/com/siemens/ct/exi/exificient/1.0.1-SNAPSHOT/exificient-1.0.1-SNAPSHOT.jar" sourcepath="M2_REPO/com/siemens/ct/exi/exificient/1.0.1-SNAPSHOT/exificient-1.0.1-SNAPSHOT-sources.jar">
     <attributes>
-      <attribute value="jar:file:/C:/Users/mchn4310/.m2/repository/com/siemens/ct/exi/exificient/1.0.0/exificient-1.0.0-javadoc.jar!/" name="javadoc_location"/>
+      <attribute value="jar:file:/C:/Users/mchn4310/.m2/repository/com/siemens/ct/exi/exificient/1.0.1-SNAPSHOT/exificient-1.0.1-SNAPSHOT-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
   <classpathentry kind="var" path="M2_REPO/com/siemens/ct/exi/exificient-core/1.0.0/exificient-core-1.0.0.jar" sourcepath="M2_REPO/com/siemens/ct/exi/exificient-core/1.0.0/exificient-core-1.0.0-sources.jar">
@@ -30,11 +30,7 @@
     </attributes>
   </classpathentry>
   <classpathentry kind="var" path="M2_REPO/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar"/>
-  <classpathentry kind="var" path="M2_REPO/com/siemens/ct/exi/exificient-for-json/1.0.0/exificient-for-json-1.0.0.jar" sourcepath="M2_REPO/com/siemens/ct/exi/exificient-for-json/1.0.0/exificient-for-json-1.0.0-sources.jar">
-    <attributes>
-      <attribute value="jar:file:/C:/Users/mchn4310/.m2/repository/com/siemens/ct/exi/exificient-for-json/1.0.0/exificient-for-json-1.0.0-javadoc.jar!/" name="javadoc_location"/>
-    </attributes>
-  </classpathentry>
+  <classpathentry kind="var" path="M2_REPO/com/siemens/ct/exi/exificient-for-json/1.0.1-SNAPSHOT/exificient-for-json-1.0.1-SNAPSHOT.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/glassfish/javax.json/1.0.4/javax.json-1.0.4.jar" sourcepath="M2_REPO/org/glassfish/javax.json/1.0.4/javax.json-1.0.4-sources.jar">
     <attributes>
       <attribute value="jar:file:/C:/Users/mchn4310/.m2/repository/org/glassfish/javax.json/1.0.4/javax.json-1.0.4-javadoc.jar!/" name="javadoc_location"/>
@@ -55,9 +51,9 @@
       <attribute value="jar:file:/C:/Users/mchn4310/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.8.0/jackson-annotations-2.8.0-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
-  <classpathentry kind="var" path="M2_REPO/com/siemens/ct/exi/exificient-for-javascript/1.0.0/exificient-for-javascript-1.0.0.jar" sourcepath="M2_REPO/com/siemens/ct/exi/exificient-for-javascript/1.0.0/exificient-for-javascript-1.0.0-sources.jar">
+  <classpathentry kind="var" path="M2_REPO/com/siemens/ct/exi/exificient-for-javascript/1.0.1-SNAPSHOT/exificient-for-javascript-1.0.1-SNAPSHOT.jar" sourcepath="M2_REPO/com/siemens/ct/exi/exificient-for-javascript/1.0.1-SNAPSHOT/exificient-for-javascript-1.0.1-SNAPSHOT-sources.jar">
     <attributes>
-      <attribute value="jar:file:/C:/Users/mchn4310/.m2/repository/com/siemens/ct/exi/exificient-for-javascript/1.0.0/exificient-for-javascript-1.0.0-javadoc.jar!/" name="javadoc_location"/>
+      <attribute value="jar:file:/C:/Users/mchn4310/.m2/repository/com/siemens/ct/exi/exificient-for-javascript/1.0.1-SNAPSHOT/exificient-for-javascript-1.0.1-SNAPSHOT-javadoc.jar!/" name="javadoc_location"/>
     </attributes>
   </classpathentry>
 </classpath>

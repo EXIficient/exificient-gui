@@ -128,7 +128,7 @@ import com.siemens.ct.exi.main.helpers.DefaultSchemaIdResolver;
 
 public class EXIficientGUI extends JFrame {
 	
-	static final String TITLE = "EXIficient (1.0.0)"; // -SNAPSHOT
+	static final String TITLE = "EXIficient (1.0.0-SNAPSHOT)"; 
 
 	/**
 	 * 
