@@ -47,17 +47,17 @@
     <dependency>
       <groupId>com.siemens.ct.exi</groupId>
       <artifactId>exificient</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
+      <version>1.0.0</version><!-- -SNAPSHOT -->
     </dependency>
     <dependency>
       <groupId>com.siemens.ct.exi</groupId>
       <artifactId>exificient-for-json</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
+      <version>1.0.0</version><!-- -SNAPSHOT -->
     </dependency>
     <dependency>
       <groupId>com.siemens.ct.exi</groupId>
       <artifactId>exificient-for-javascript</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
+      <version>1.0.0</version><!-- -SNAPSHOT -->
     </dependency>
     <!-- Runtime Dependencies (schema-informed mode) -->
     <dependency>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2016 Siemens AG
+ * Copyright (c) 2007-2018 Siemens AG
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -124,10 +124,11 @@ import com.siemens.ct.exi.main.helpers.DefaultSchemaIdResolver;
  * @author Daniel.Peintner.EXT@siemens.com
  * @author Joerg.Heuer@siemens.com
  * 
- * @version 0.9.7-SNAPSHOT
  */
 
 public class EXIficientGUI extends JFrame {
+	
+	static final String TITLE = "EXIficient (1.0.0)"; // -SNAPSHOT
 
 	/**
 	 * 
@@ -785,7 +786,7 @@ public class EXIficientGUI extends JFrame {
 	 * Create the frame.
 	 */
 	public EXIficientGUI() {
-		setTitle("EXIficient (0.9.7-SNAPSHOT)");
+		setTitle(TITLE);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 770, 500);
 		contentPane = new JPanel();
