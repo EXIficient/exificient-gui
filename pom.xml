@@ -4,7 +4,7 @@
   <artifactId>exificient-gui</artifactId>
   <name>EXIficientGUI</name>
   <url>http://exificient.github.io/</url>
-  <version>1.0.2-SNAPSHOT</version>
+  <version>1.0.4-SNAPSHOT</version>
   <packaging>jar</packaging>
   <description>EXIficient is an open source implementation of the W3C Efficient XML Interchange
     (EXI) format specification written in the Java programming language. The EXI format is a very
@@ -47,23 +47,23 @@
     <dependency>
       <groupId>com.siemens.ct.exi</groupId>
       <artifactId>exificient</artifactId>
-      <version>1.0.2-SNAPSHOT</version>
+      <version>1.0.4</version><!-- -SNAPSHOT -->
     </dependency>
     <dependency>
       <groupId>com.siemens.ct.exi</groupId>
       <artifactId>exificient-for-json</artifactId>
-      <version>1.0.2-SNAPSHOT</version>
+      <version>1.0.4</version><!-- -SNAPSHOT -->
     </dependency>
     <dependency>
       <groupId>com.siemens.ct.exi</groupId>
       <artifactId>exificient-for-javascript</artifactId>
-      <version>1.0.2-SNAPSHOT</version>
+      <version>1.0.4</version><!-- -SNAPSHOT -->
     </dependency>
     <!-- Runtime Dependencies (schema-informed mode) -->
     <dependency>
       <groupId>xerces</groupId>
       <artifactId>xercesImpl</artifactId>
-      <version>2.11.0</version>
+      <version>2.12.0</version>
     </dependency>
     <!-- Test Dependencies -->
     <!-- 
