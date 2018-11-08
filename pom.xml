@@ -4,7 +4,7 @@
   <artifactId>exificient-gui</artifactId>
   <name>EXIficientGUI</name>
   <url>http://exificient.github.io/</url>
-  <version>1.0.4</version>
+  <version>1.0.5-SNAPSHOT</version>
   <packaging>jar</packaging>
   <description>EXIficient is an open source implementation of the W3C Efficient XML Interchange
     (EXI) format specification written in the Java programming language. The EXI format is a very
@@ -40,7 +40,7 @@
     <!-- <developerConnection>scm:git:git@github.com:EXIficient/exificient-gui.git</developerConnection> -->
 	<developerConnection>scm:git:https://github.com/EXIficient/exificient-gui.git</developerConnection>
     <url>https://github.com/EXIficient/exificient</url>
-    <tag>v1.0.4</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <dependencies>
